@@ -26,4 +26,5 @@ export default {
   focusNeighbors: "仅看邻居",
   repel: "斥力",
   spring: "弹簧",
+  simulating: "模拟中...",
 } as const;

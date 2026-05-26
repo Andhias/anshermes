@@ -26,4 +26,5 @@ export default {
   focusNeighbors: "Enfocar vecinos",
   repel: "Repulsión",
   spring: "Resorte",
+  simulating: "Simulando...",
 } as const;

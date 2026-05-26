@@ -5387,6 +5387,11 @@ body {
   box-shadow: 0 0 10px rgba(117, 236, 255, 0.35);
 }
 
+.graph-chip:disabled {
+  opacity: 0.7;
+  cursor: wait;
+}
+
 .graph-physics {
   position: absolute;
   left: 14px;
@@ -5434,5 +5439,11 @@ body {
 
 .graph-mini-node-active {
   fill: #c4fbff;
+}
+
+.graph-mini-viewport {
+  fill: rgba(135, 238, 255, 0.08);
+  stroke: rgba(168, 244, 255, 0.75);
+  stroke-width: 0.6;
 }
 

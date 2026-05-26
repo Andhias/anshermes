@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useI18n } from "../../components/useI18n";
 
 type ObsidianNode = {
@@ -39,6 +39,43 @@ export default function Graph(): React.JSX.Element {
   const [focusNeighborsOnly, setFocusNeighborsOnly] = useState(false);
   const [repelStrength, setRepelStrength] = useState(6.5);
   const [springStrength, setSpringStrength] = useState(0.015);
+  const [isSimulating, setIsSimulating] = useState(false);
+  const simFrameRef = useRef<number | null>(null);
+
+  const GRAPH_PREFS_KEY = "jarvis-graph-prefs-v1";
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(GRAPH_PREFS_KEY);
+      if (!raw) return;
+      const parsed = JSON.parse(raw) as {
+        intensity?: "low" | "medium" | "high";
+        focusNeighborsOnly?: boolean;
+        repelStrength?: number;
+        springStrength?: number;
+      };
+      if (parsed.intensity) setIntensity(parsed.intensity);
+      if (typeof parsed.focusNeighborsOnly === "boolean") setFocusNeighborsOnly(parsed.focusNeighborsOnly);
+      if (typeof parsed.repelStrength === "number") setRepelStrength(parsed.repelStrength);
+      if (typeof parsed.springStrength === "number") setSpringStrength(parsed.springStrength);
+    } catch {
+      // ignore broken local prefs
+    }
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem(
+      GRAPH_PREFS_KEY,
+      JSON.stringify({ intensity, focusNeighborsOnly, repelStrength, springStrength }),
+    );
+  }, [intensity, focusNeighborsOnly, repelStrength, springStrength]);
+
+  useEffect(
+    () => () => {
+      if (simFrameRef.current) cancelAnimationFrame(simFrameRef.current);
+    },
+    [],
+  );
 
   useEffect(() => {
     let alive = true;
@@ -133,14 +170,22 @@ export default function Graph(): React.JSX.Element {
     setZoom((z) => Math.min(2.4, Math.max(0.55, Number((z + delta).toFixed(2)))));
   }
 
-  function autoArrange(): void {
-    setNodes((prev) => {
-      if (prev.length < 2) return prev;
-      const next = prev.map((n) => ({ ...n }));
-      const map = new Map<string, number>();
-      next.forEach((n, i) => map.set(n.id, i));
+  function runSimulation(iterations = 140): void {
+    if (simFrameRef.current) cancelAnimationFrame(simFrameRef.current);
+    setIsSimulating(true);
 
-      for (let step = 0; step < 120; step += 1) {
+    let step = 0;
+    const mapIndices = new Map<string, number>();
+
+    setNodes((prev) => {
+      prev.forEach((n, i) => mapIndices.set(n.id, i));
+      return prev;
+    });
+
+    const tick = (): void => {
+      setNodes((prev) => {
+        if (prev.length < 2) return prev;
+        const next = prev.map((n) => ({ ...n }));
         const forces = next.map(() => ({ x: 0, y: 0 }));
 
         for (let i = 0; i < next.length; i += 1) {
@@ -151,17 +196,17 @@ export default function Graph(): React.JSX.Element {
             const dy = a.y - b.y;
             const d2 = Math.max(0.01, dx * dx + dy * dy);
             const repulse = repelStrength / d2;
-            forces[i].x += (dx * repulse);
-            forces[i].y += (dy * repulse);
-            forces[j].x -= (dx * repulse);
-            forces[j].y -= (dy * repulse);
+            forces[i].x += dx * repulse;
+            forces[i].y += dy * repulse;
+            forces[j].x -= dx * repulse;
+            forces[j].y -= dy * repulse;
           }
         }
 
         for (let i = 0; i < next.length; i += 1) {
           const from = next[i];
           for (const target of from.links) {
-            const j = map.get(target);
+            const j = mapIndices.get(target);
             if (j === undefined) continue;
             const to = next[j];
             const dx = to.x - from.x;
@@ -177,11 +222,30 @@ export default function Graph(): React.JSX.Element {
           next[i].x = Math.min(97, Math.max(3, next[i].x + forces[i].x * 0.55));
           next[i].y = Math.min(97, Math.max(3, next[i].y + forces[i].y * 0.55));
         }
-      }
 
-      return next;
-    });
+        return next;
+      });
+
+      step += 1;
+      if (step < iterations) {
+        simFrameRef.current = requestAnimationFrame(tick);
+      } else {
+        simFrameRef.current = null;
+        setIsSimulating(false);
+      }
+    };
+
+    simFrameRef.current = requestAnimationFrame(tick);
   }
+
+  function autoArrange(): void {
+    runSimulation(140);
+  }
+
+  const miniViewX = Math.max(0, Math.min(100, -panX / zoom));
+  const miniViewY = Math.max(0, Math.min(100, -panY / zoom));
+  const miniViewW = Math.max(8, Math.min(100, 100 / zoom));
+  const miniViewH = Math.max(8, Math.min(100, 100 / zoom));
 
   return (
     <div className={`graph-screen jarvis-graph intensity-${intensity}`}>
@@ -204,8 +268,8 @@ export default function Graph(): React.JSX.Element {
             </option>
           ))}
         </select>
-        <button className="graph-chip" onClick={autoArrange}>
-          {t("graph.autoArrange")}
+        <button className="graph-chip" onClick={autoArrange} disabled={isSimulating}>
+          {isSimulating ? t("graph.simulating") : t("graph.autoArrange")}
         </button>
         <button
           className={focusNeighborsOnly ? "graph-chip graph-chip-active" : "graph-chip"}
@@ -343,6 +407,13 @@ export default function Graph(): React.JSX.Element {
                 className={selected?.id === node.id ? "graph-mini-node graph-mini-node-active" : "graph-mini-node"}
               />
             ))}
+            <rect
+              x={miniViewX}
+              y={miniViewY}
+              width={miniViewW}
+              height={miniViewH}
+              className="graph-mini-viewport"
+            />
           </svg>
         </div>
 
