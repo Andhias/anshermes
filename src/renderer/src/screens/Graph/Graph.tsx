@@ -42,6 +42,7 @@ export default function Graph(): React.JSX.Element {
   const [isSimulating, setIsSimulating] = useState(false);
   const [continuousPhysics, setContinuousPhysics] = useState(false);
   const [stylePreset, setStylePreset] = useState<"obsidian" | "jarvis-soft" | "jarvis-hardcore">("jarvis-soft");
+  const [clusterMode, setClusterMode] = useState<"none" | "tag" | "folder">("none");
   const simFrameRef = useRef<number | null>(null);
   const miniDragRef = useRef(false);
 
@@ -58,6 +59,7 @@ export default function Graph(): React.JSX.Element {
         springStrength?: number;
         continuousPhysics?: boolean;
         stylePreset?: "obsidian" | "jarvis-soft" | "jarvis-hardcore";
+        clusterMode?: "none" | "tag" | "folder";
       };
       if (parsed.intensity) setIntensity(parsed.intensity);
       if (typeof parsed.focusNeighborsOnly === "boolean") setFocusNeighborsOnly(parsed.focusNeighborsOnly);
@@ -65,6 +67,7 @@ export default function Graph(): React.JSX.Element {
       if (typeof parsed.springStrength === "number") setSpringStrength(parsed.springStrength);
       if (typeof parsed.continuousPhysics === "boolean") setContinuousPhysics(parsed.continuousPhysics);
       if (parsed.stylePreset) setStylePreset(parsed.stylePreset);
+      if (parsed.clusterMode) setClusterMode(parsed.clusterMode);
     } catch {
       // ignore broken local prefs
     }
@@ -80,6 +83,7 @@ export default function Graph(): React.JSX.Element {
         springStrength,
         continuousPhysics,
         stylePreset,
+        clusterMode,
       }),
     );
   }, [
@@ -89,6 +93,7 @@ export default function Graph(): React.JSX.Element {
     springStrength,
     continuousPhysics,
     stylePreset,
+    clusterMode,
   ]);
 
   useEffect(
@@ -283,6 +288,63 @@ export default function Graph(): React.JSX.Element {
     runSimulation(140);
   }
 
+  const palette = ["#72f2ff", "#ffd96d", "#ff8cd8", "#9dff8f", "#ff9a6b", "#8bb8ff", "#b8ffec"];
+
+  function hashToColor(key: string): string {
+    let h = 0;
+    for (let i = 0; i < key.length; i += 1) h = (h * 31 + key.charCodeAt(i)) >>> 0;
+    return palette[h % palette.length];
+  }
+
+  function nodeColor(node: PositionedNode): string {
+    if (clusterMode === "none") return "";
+    if (clusterMode === "tag") return hashToColor(node.tags[0] || "untagged");
+    const folder = node.path.split("/").slice(0, -1).join("/") || "root";
+    return hashToColor(folder);
+  }
+
+  function exportSvg(): void {
+    const svg = document.querySelector(".graph-canvas") as SVGSVGElement | null;
+    if (!svg) return;
+    const clone = svg.cloneNode(true) as SVGSVGElement;
+    clone.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+    const data = new XMLSerializer().serializeToString(clone);
+    const blob = new Blob([data], { type: "image/svg+xml;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "jarvis-graph.svg";
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function exportPng(): void {
+    const svg = document.querySelector(".graph-canvas") as SVGSVGElement | null;
+    if (!svg) return;
+    const data = new XMLSerializer().serializeToString(svg);
+    const blob = new Blob([data], { type: "image/svg+xml;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = 1400;
+      canvas.height = 900;
+      const ctx = canvas.getContext("2d");
+      if (ctx) {
+        ctx.fillStyle = "#05101d";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        const pngUrl = canvas.toDataURL("image/png");
+        const a = document.createElement("a");
+        a.href = pngUrl;
+        a.download = "jarvis-graph.png";
+        a.click();
+      }
+      URL.revokeObjectURL(url);
+    };
+    img.src = url;
+  }
+
   const miniViewX = Math.max(0, Math.min(100, -panX / zoom));
   const miniViewY = Math.max(0, Math.min(100, -panY / zoom));
   const miniViewW = Math.max(8, Math.min(100, 100 / zoom));
@@ -336,6 +398,11 @@ export default function Graph(): React.JSX.Element {
           <option value="jarvis-soft">{t("graph.presetJarvisSoft")}</option>
           <option value="jarvis-hardcore">{t("graph.presetJarvisHardcore")}</option>
         </select>
+        <select className="graph-select" value={clusterMode} onChange={(e) => setClusterMode(e.target.value as "none" | "tag" | "folder") }>
+          <option value="none">{t("graph.clusterNone")}</option>
+          <option value="tag">{t("graph.clusterTag")}</option>
+          <option value="folder">{t("graph.clusterFolder")}</option>
+        </select>
         <button
           className={continuousPhysics ? "graph-chip graph-chip-active" : "graph-chip"}
           onClick={() => setContinuousPhysics((v) => !v)}
@@ -345,6 +412,8 @@ export default function Graph(): React.JSX.Element {
         <button className="graph-chip" onClick={() => { setZoom(1); setPanX(0); setPanY(0); }}>
           {t("graph.resetView")}
         </button>
+        <button className="graph-chip" onClick={exportSvg}>{t("graph.exportSvg")}</button>
+        <button className="graph-chip" onClick={exportPng}>{t("graph.exportPng")}</button>
       </div>
 
       <div className="graph-shell">
@@ -367,18 +436,28 @@ export default function Graph(): React.JSX.Element {
           }}
         >
           <svg className="graph-canvas" viewBox="0 0 100 100" onWheel={onWheel}>
+            <defs>
+              <marker id="graph-arrow" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto" markerUnits="strokeWidth">
+                <path d="M0,0 L6,3 L0,6 z" fill="rgba(116, 220, 255, 0.95)" />
+              </marker>
+            </defs>
             <g transform={`translate(${panX} ${panY}) scale(${zoom})`}>
               {edges.map(({ from, to }) => {
                 const active = selected ? selected.id === from.id || selected.id === to.id : false;
                 return (
-                  <line
-                    key={from.id + "-" + to.id}
-                    x1={from.x}
-                    y1={from.y}
-                    x2={to.x}
-                    y2={to.y}
-                    className={active ? "graph-edge graph-edge-active" : "graph-edge"}
-                  />
+                  <g key={from.id + "-" + to.id}>
+                    <line
+                      x1={from.x}
+                      y1={from.y}
+                      x2={to.x}
+                      y2={to.y}
+                      markerEnd="url(#graph-arrow)"
+                      className={active ? "graph-edge graph-edge-active" : "graph-edge"}
+                    />
+                    <text x={(from.x + to.x) / 2} y={(from.y + to.y) / 2} className="graph-edge-label">
+                      {from.label.slice(0, 6)}→{to.label.slice(0, 6)}
+                    </text>
+                  </g>
                 );
               })}
 
@@ -408,7 +487,7 @@ export default function Graph(): React.JSX.Element {
                       window.addEventListener("mouseup", onUp);
                     }}
                   >
-                    <circle cx={node.x} cy={node.y} r={active ? 1.95 : 1.35} />
+                    <circle cx={node.x} cy={node.y} r={active ? 1.95 : 1.35} style={nodeColor(node) ? { fill: nodeColor(node) } : undefined} />
                     <text x={node.x} y={node.y + 3.8} textAnchor="middle" className="graph-label">
                       {node.label}
                     </text>

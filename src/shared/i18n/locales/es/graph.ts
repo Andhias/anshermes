@@ -31,4 +31,9 @@ export default {
   presetObsidian: "Obsidian",
   presetJarvisSoft: "Jarvis suave",
   presetJarvisHardcore: "Jarvis hardcore",
+  clusterNone: "Cluster: none",
+  clusterTag: "Cluster: tag",
+  clusterFolder: "Cluster: folder",
+  exportSvg: "Export SVG",
+  exportPng: "Export PNG",
 } as const;

@@ -31,4 +31,9 @@ export default {
   presetObsidian: "Obsidian",
   presetJarvisSoft: "Jarvis 柔和",
   presetJarvisHardcore: "Jarvis 强化",
+  clusterNone: "聚类: 无",
+  clusterTag: "聚类: 标签",
+  clusterFolder: "聚类: 文件夹",
+  exportSvg: "导出 SVG",
+  exportPng: "导出 PNG",
 } as const;

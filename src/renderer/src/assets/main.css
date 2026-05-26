@@ -5235,8 +5235,14 @@ body {
 }
 
 .graph-edge {
-  stroke: rgba(108, 190, 230, 0.26);
-  stroke-width: 0.3;
+  stroke: rgba(117, 218, 255, 0.56);
+  stroke-width: 0.42;
+}
+
+.graph-edge-label {
+  fill: rgba(155, 223, 246, 0.85);
+  font-size: 1.3px;
+  pointer-events: none;
 }
 
 .graph-edge-active {
