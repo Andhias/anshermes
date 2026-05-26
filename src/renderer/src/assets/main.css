@@ -5366,3 +5366,19 @@ body {
   }
 }
 
+.intensity-low .graph-node circle {
+  filter: drop-shadow(0 0 1px rgba(126, 238, 255, 0.18));
+}
+
+.intensity-medium .graph-node circle {
+  filter: drop-shadow(0 0 3px rgba(126, 238, 255, 0.45));
+}
+
+.intensity-high .graph-node circle {
+  filter: drop-shadow(0 0 7px rgba(126, 238, 255, 0.88));
+}
+
+.intensity-high .graph-edge {
+  stroke-opacity: 0.55;
+}
+

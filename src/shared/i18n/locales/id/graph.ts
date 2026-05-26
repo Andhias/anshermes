@@ -19,4 +19,8 @@ export default {
   resetView: "Reset view",
   vault: "Vault: {{path}}",
   summary: "Terlihat: {{nodes}} node • {{edges}} edge",
+  autoArrange: "Rapikan otomatis",
+  intensityLow: "Glow rendah",
+  intensityMedium: "Glow sedang",
+  intensityHigh: "Glow tinggi",
 } as const;

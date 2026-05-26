@@ -19,4 +19,8 @@ export default {
   resetView: "Redefinir visão",
   vault: "Vault: {{path}}",
   summary: "Visíveis: {{nodes}} nós • {{edges}} arestas",
+  autoArrange: "Auto-organizar",
+  intensityLow: "Brilho baixo",
+  intensityMedium: "Brilho médio",
+  intensityHigh: "Brilho alto",
 } as const;

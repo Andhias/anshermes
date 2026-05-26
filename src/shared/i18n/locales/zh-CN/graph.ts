@@ -19,4 +19,8 @@ export default {
   resetView: "重置视图",
   vault: "Vault: {{path}}",
   summary: "可见: {{nodes}} 节点 • {{edges}} 边",
+  autoArrange: "自动布局",
+  intensityLow: "低辉光",
+  intensityMedium: "中辉光",
+  intensityHigh: "高辉光",
 } as const;

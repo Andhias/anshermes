@@ -19,4 +19,8 @@ export default {
   resetView: "Reset view",
   vault: "Vault: {{path}}",
   summary: "Visible: {{nodes}} nodes • {{edges}} edges",
+  autoArrange: "Auto arrange",
+  intensityLow: "Glow low",
+  intensityMedium: "Glow medium",
+  intensityHigh: "Glow high",
 } as const;

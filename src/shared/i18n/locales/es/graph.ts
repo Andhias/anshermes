@@ -19,4 +19,8 @@ export default {
   resetView: "Restablecer vista",
   vault: "Vault: {{path}}",
   summary: "Visibles: {{nodes}} nodos • {{edges}} enlaces",
+  autoArrange: "Auto ordenar",
+  intensityLow: "Brillo bajo",
+  intensityMedium: "Brillo medio",
+  intensityHigh: "Brillo alto",
 } as const;

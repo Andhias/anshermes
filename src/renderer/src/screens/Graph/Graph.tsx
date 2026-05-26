@@ -35,6 +35,7 @@ export default function Graph(): React.JSX.Element {
   const [zoom, setZoom] = useState(1);
   const [panX, setPanX] = useState(0);
   const [panY, setPanY] = useState(0);
+  const [intensity, setIntensity] = useState<"low" | "medium" | "high">("medium");
 
   useEffect(() => {
     let alive = true;
@@ -119,8 +120,58 @@ export default function Graph(): React.JSX.Element {
     setZoom((z) => Math.min(2.4, Math.max(0.55, Number((z + delta).toFixed(2)))));
   }
 
+  function autoArrange(): void {
+    setNodes((prev) => {
+      if (prev.length < 2) return prev;
+      const next = prev.map((n) => ({ ...n }));
+      const map = new Map<string, number>();
+      next.forEach((n, i) => map.set(n.id, i));
+
+      for (let step = 0; step < 120; step += 1) {
+        const forces = next.map(() => ({ x: 0, y: 0 }));
+
+        for (let i = 0; i < next.length; i += 1) {
+          for (let j = i + 1; j < next.length; j += 1) {
+            const a = next[i];
+            const b = next[j];
+            const dx = a.x - b.x;
+            const dy = a.y - b.y;
+            const d2 = Math.max(0.01, dx * dx + dy * dy);
+            const repulse = 6.5 / d2;
+            forces[i].x += (dx * repulse);
+            forces[i].y += (dy * repulse);
+            forces[j].x -= (dx * repulse);
+            forces[j].y -= (dy * repulse);
+          }
+        }
+
+        for (let i = 0; i < next.length; i += 1) {
+          const from = next[i];
+          for (const target of from.links) {
+            const j = map.get(target);
+            if (j === undefined) continue;
+            const to = next[j];
+            const dx = to.x - from.x;
+            const dy = to.y - from.y;
+            const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+            const spring = (dist - 12) * 0.015;
+            forces[i].x += (dx / dist) * spring;
+            forces[i].y += (dy / dist) * spring;
+          }
+        }
+
+        for (let i = 0; i < next.length; i += 1) {
+          next[i].x = Math.min(97, Math.max(3, next[i].x + forces[i].x * 0.55));
+          next[i].y = Math.min(97, Math.max(3, next[i].y + forces[i].y * 0.55));
+        }
+      }
+
+      return next;
+    });
+  }
+
   return (
-    <div className="graph-screen jarvis-graph">
+    <div className={`graph-screen jarvis-graph intensity-${intensity}`}>
       <div className="graph-header">
         <h2>{t("graph.title")}</h2>
         <p>{t("graph.subtitle")}</p>
@@ -139,6 +190,18 @@ export default function Graph(): React.JSX.Element {
               {tg === "all" ? t("graph.allTags") : "#" + tg}
             </option>
           ))}
+        </select>
+        <button className="graph-chip" onClick={autoArrange}>
+          {t("graph.autoArrange")}
+        </button>
+        <select
+          className="graph-select"
+          value={intensity}
+          onChange={(e) => setIntensity(e.target.value as "low" | "medium" | "high")}
+        >
+          <option value="low">{t("graph.intensityLow")}</option>
+          <option value="medium">{t("graph.intensityMedium")}</option>
+          <option value="high">{t("graph.intensityHigh")}</option>
         </select>
         <button className="graph-chip" onClick={() => { setZoom(1); setPanX(0); setPanY(0); }}>
           {t("graph.resetView")}
