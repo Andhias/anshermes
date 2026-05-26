@@ -27,4 +27,8 @@ export default {
   repel: "斥力",
   spring: "弹簧",
   simulating: "模拟中...",
+  continuousPhysics: "持续物理",
+  presetObsidian: "Obsidian",
+  presetJarvisSoft: "Jarvis 柔和",
+  presetJarvisHardcore: "Jarvis 强化",
 } as const;

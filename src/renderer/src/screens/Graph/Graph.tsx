@@ -40,7 +40,10 @@ export default function Graph(): React.JSX.Element {
   const [repelStrength, setRepelStrength] = useState(6.5);
   const [springStrength, setSpringStrength] = useState(0.015);
   const [isSimulating, setIsSimulating] = useState(false);
+  const [continuousPhysics, setContinuousPhysics] = useState(false);
+  const [stylePreset, setStylePreset] = useState<"obsidian" | "jarvis-soft" | "jarvis-hardcore">("jarvis-soft");
   const simFrameRef = useRef<number | null>(null);
+  const miniDragRef = useRef(false);
 
   const GRAPH_PREFS_KEY = "jarvis-graph-prefs-v1";
 
@@ -53,11 +56,15 @@ export default function Graph(): React.JSX.Element {
         focusNeighborsOnly?: boolean;
         repelStrength?: number;
         springStrength?: number;
+        continuousPhysics?: boolean;
+        stylePreset?: "obsidian" | "jarvis-soft" | "jarvis-hardcore";
       };
       if (parsed.intensity) setIntensity(parsed.intensity);
       if (typeof parsed.focusNeighborsOnly === "boolean") setFocusNeighborsOnly(parsed.focusNeighborsOnly);
       if (typeof parsed.repelStrength === "number") setRepelStrength(parsed.repelStrength);
       if (typeof parsed.springStrength === "number") setSpringStrength(parsed.springStrength);
+      if (typeof parsed.continuousPhysics === "boolean") setContinuousPhysics(parsed.continuousPhysics);
+      if (parsed.stylePreset) setStylePreset(parsed.stylePreset);
     } catch {
       // ignore broken local prefs
     }
@@ -66,9 +73,23 @@ export default function Graph(): React.JSX.Element {
   useEffect(() => {
     localStorage.setItem(
       GRAPH_PREFS_KEY,
-      JSON.stringify({ intensity, focusNeighborsOnly, repelStrength, springStrength }),
+      JSON.stringify({
+        intensity,
+        focusNeighborsOnly,
+        repelStrength,
+        springStrength,
+        continuousPhysics,
+        stylePreset,
+      }),
     );
-  }, [intensity, focusNeighborsOnly, repelStrength, springStrength]);
+  }, [
+    intensity,
+    focusNeighborsOnly,
+    repelStrength,
+    springStrength,
+    continuousPhysics,
+    stylePreset,
+  ]);
 
   useEffect(
     () => () => {
@@ -152,6 +173,26 @@ export default function Graph(): React.JSX.Element {
     }
     return out;
   }, [nodes, visibleIds]);
+
+  useEffect(() => {
+    if (!continuousPhysics) {
+      if (simFrameRef.current) {
+        cancelAnimationFrame(simFrameRef.current);
+        simFrameRef.current = null;
+      }
+      setIsSimulating(false);
+      return;
+    }
+    runSimulation(1000000);
+    return () => {
+      if (simFrameRef.current) {
+        cancelAnimationFrame(simFrameRef.current);
+        simFrameRef.current = null;
+      }
+      setIsSimulating(false);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [continuousPhysics, repelStrength, springStrength]);
 
   function updateNodePosition(id: string, x: number, y: number): void {
     setNodes((prev) =>
@@ -248,7 +289,7 @@ export default function Graph(): React.JSX.Element {
   const miniViewH = Math.max(8, Math.min(100, 100 / zoom));
 
   return (
-    <div className={`graph-screen jarvis-graph intensity-${intensity}`}>
+    <div className={`graph-screen jarvis-graph intensity-${intensity} preset-${stylePreset}`}>
       <div className="graph-header">
         <h2>{t("graph.title")}</h2>
         <p>{t("graph.subtitle")}</p>
@@ -286,6 +327,21 @@ export default function Graph(): React.JSX.Element {
           <option value="medium">{t("graph.intensityMedium")}</option>
           <option value="high">{t("graph.intensityHigh")}</option>
         </select>
+        <select
+          className="graph-select"
+          value={stylePreset}
+          onChange={(e) => setStylePreset(e.target.value as "obsidian" | "jarvis-soft" | "jarvis-hardcore")}
+        >
+          <option value="obsidian">{t("graph.presetObsidian")}</option>
+          <option value="jarvis-soft">{t("graph.presetJarvisSoft")}</option>
+          <option value="jarvis-hardcore">{t("graph.presetJarvisHardcore")}</option>
+        </select>
+        <button
+          className={continuousPhysics ? "graph-chip graph-chip-active" : "graph-chip"}
+          onClick={() => setContinuousPhysics((v) => !v)}
+        >
+          {t("graph.continuousPhysics")}
+        </button>
         <button className="graph-chip" onClick={() => { setZoom(1); setPanX(0); setPanY(0); }}>
           {t("graph.resetView")}
         </button>
@@ -387,7 +443,33 @@ export default function Graph(): React.JSX.Element {
             </label>
           </div>
 
-          <svg className="graph-minimap" viewBox="0 0 100 100">
+          <svg
+            className="graph-minimap"
+            viewBox="0 0 100 100"
+            onMouseDown={(e) => {
+              miniDragRef.current = true;
+              const svg = e.currentTarget;
+              const rect = svg.getBoundingClientRect();
+              const apply = (clientX: number, clientY: number): void => {
+                const x = ((clientX - rect.left) / rect.width) * 100;
+                const y = ((clientY - rect.top) / rect.height) * 100;
+                setPanX(-(x - miniViewW / 2) * zoom);
+                setPanY(-(y - miniViewH / 2) * zoom);
+              };
+              apply(e.clientX, e.clientY);
+              const onMove = (ev: MouseEvent): void => {
+                if (!miniDragRef.current) return;
+                apply(ev.clientX, ev.clientY);
+              };
+              const onUp = (): void => {
+                miniDragRef.current = false;
+                window.removeEventListener("mousemove", onMove);
+                window.removeEventListener("mouseup", onUp);
+              };
+              window.addEventListener("mousemove", onMove);
+              window.addEventListener("mouseup", onUp);
+            }}
+          >
             {edges.map(({ from, to }) => (
               <line
                 key={`mini-${from.id}-${to.id}`}

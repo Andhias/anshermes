@@ -27,4 +27,8 @@ export default {
   repel: "Repulsão",
   spring: "Mola",
   simulating: "Simulando...",
+  continuousPhysics: "Física contínua",
+  presetObsidian: "Obsidian",
+  presetJarvisSoft: "Jarvis suave",
+  presetJarvisHardcore: "Jarvis hardcore",
 } as const;
