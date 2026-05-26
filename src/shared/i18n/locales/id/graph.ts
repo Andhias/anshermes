@@ -23,4 +23,7 @@ export default {
   intensityLow: "Glow rendah",
   intensityMedium: "Glow sedang",
   intensityHigh: "Glow tinggi",
+  focusNeighbors: "Fokus tetangga",
+  repel: "Repel",
+  spring: "Spring",
 } as const;

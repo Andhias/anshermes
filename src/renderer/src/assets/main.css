@@ -5382,3 +5382,57 @@ body {
   stroke-opacity: 0.55;
 }
 
+.graph-chip-active {
+  border-color: rgba(117, 236, 255, 0.9);
+  box-shadow: 0 0 10px rgba(117, 236, 255, 0.35);
+}
+
+.graph-physics {
+  position: absolute;
+  left: 14px;
+  bottom: 14px;
+  z-index: 2;
+  display: flex;
+  gap: 10px;
+  background: rgba(7, 16, 30, 0.78);
+  border: 1px solid rgba(115, 214, 255, 0.3);
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+
+.graph-physics label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  color: #9ad7e8;
+  font-size: 11px;
+}
+
+.graph-physics input[type="range"] {
+  width: 120px;
+}
+
+.graph-minimap {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  width: 170px;
+  height: 120px;
+  border-radius: 10px;
+  background: rgba(5, 16, 29, 0.75);
+  border: 1px solid rgba(110, 206, 255, 0.35);
+}
+
+.graph-mini-edge {
+  stroke: rgba(113, 202, 241, 0.35);
+  stroke-width: 0.35;
+}
+
+.graph-mini-node {
+  fill: rgba(155, 238, 255, 0.5);
+}
+
+.graph-mini-node-active {
+  fill: #c4fbff;
+}
+

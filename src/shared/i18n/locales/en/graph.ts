@@ -23,4 +23,7 @@ export default {
   intensityLow: "Glow low",
   intensityMedium: "Glow medium",
   intensityHigh: "Glow high",
+  focusNeighbors: "Focus neighbors",
+  repel: "Repel",
+  spring: "Spring",
 } as const;

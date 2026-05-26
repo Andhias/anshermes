@@ -36,6 +36,9 @@ export default function Graph(): React.JSX.Element {
   const [panX, setPanX] = useState(0);
   const [panY, setPanY] = useState(0);
   const [intensity, setIntensity] = useState<"low" | "medium" | "high">("medium");
+  const [focusNeighborsOnly, setFocusNeighborsOnly] = useState(false);
+  const [repelStrength, setRepelStrength] = useState(6.5);
+  const [springStrength, setSpringStrength] = useState(0.015);
 
   useEffect(() => {
     let alive = true;
@@ -76,7 +79,20 @@ export default function Graph(): React.JSX.Element {
     });
   }, [nodes, query, tag]);
 
-  const visibleIds = useMemo(() => new Set(filtered.map((n) => n.id)), [filtered]);
+  const selected = filtered.find((n) => n.id === selectedId) || filtered[0] || null;
+  const selectedLinks = new Set(selected?.links || []);
+
+  const displayNodes = useMemo(() => {
+    if (!focusNeighborsOnly || !selected) return filtered;
+    const allowed = new Set<string>([selected.id]);
+    for (const link of selected.links) allowed.add(link);
+    for (const n of filtered) {
+      if (n.links.indexOf(selected.id) >= 0) allowed.add(n.id);
+    }
+    return filtered.filter((n) => allowed.has(n.id));
+  }, [filtered, focusNeighborsOnly, selected]);
+
+  const visibleIds = useMemo(() => new Set(displayNodes.map((n) => n.id)), [displayNodes]);
 
   const edges = useMemo(() => {
     const out: Array<{ from: PositionedNode; to: PositionedNode }> = [];
@@ -99,9 +115,6 @@ export default function Graph(): React.JSX.Element {
     }
     return out;
   }, [nodes, visibleIds]);
-
-  const selected = filtered.find((n) => n.id === selectedId) || filtered[0] || null;
-  const selectedLinks = new Set(selected?.links || []);
 
   function updateNodePosition(id: string, x: number, y: number): void {
     setNodes((prev) =>
@@ -137,7 +150,7 @@ export default function Graph(): React.JSX.Element {
             const dx = a.x - b.x;
             const dy = a.y - b.y;
             const d2 = Math.max(0.01, dx * dx + dy * dy);
-            const repulse = 6.5 / d2;
+            const repulse = repelStrength / d2;
             forces[i].x += (dx * repulse);
             forces[i].y += (dy * repulse);
             forces[j].x -= (dx * repulse);
@@ -154,7 +167,7 @@ export default function Graph(): React.JSX.Element {
             const dx = to.x - from.x;
             const dy = to.y - from.y;
             const dist = Math.sqrt(dx * dx + dy * dy) || 1;
-            const spring = (dist - 12) * 0.015;
+            const spring = (dist - 12) * springStrength;
             forces[i].x += (dx / dist) * spring;
             forces[i].y += (dy / dist) * spring;
           }
@@ -194,6 +207,12 @@ export default function Graph(): React.JSX.Element {
         <button className="graph-chip" onClick={autoArrange}>
           {t("graph.autoArrange")}
         </button>
+        <button
+          className={focusNeighborsOnly ? "graph-chip graph-chip-active" : "graph-chip"}
+          onClick={() => setFocusNeighborsOnly((v) => !v)}
+        >
+          {t("graph.focusNeighbors")}
+        </button>
         <select
           className="graph-select"
           value={intensity}
@@ -209,8 +228,7 @@ export default function Graph(): React.JSX.Element {
       </div>
 
       <div className="graph-shell">
-        <div
-          className="graph-canvas-wrap"
+        <div className="graph-canvas-wrap"
           onMouseDown={(e) => {
             const startX = e.clientX;
             const startY = e.clientY;
@@ -244,7 +262,7 @@ export default function Graph(): React.JSX.Element {
                 );
               })}
 
-              {filtered.map((node) => {
+              {displayNodes.map((node) => {
                 const active = selected?.id === node.id;
                 const neighbor = selectedLinks.has(node.id);
                 const opacity = active || neighbor || !selected ? 1 : 0.5;
@@ -279,6 +297,53 @@ export default function Graph(): React.JSX.Element {
               })}
             </g>
           </svg>
+
+          <div className="graph-physics">
+            <label>
+              {t("graph.repel")}: {repelStrength.toFixed(1)}
+              <input
+                type="range"
+                min={2}
+                max={14}
+                step={0.5}
+                value={repelStrength}
+                onChange={(e) => setRepelStrength(Number(e.target.value))}
+              />
+            </label>
+            <label>
+              {t("graph.spring")}: {springStrength.toFixed(3)}
+              <input
+                type="range"
+                min={0.005}
+                max={0.05}
+                step={0.001}
+                value={springStrength}
+                onChange={(e) => setSpringStrength(Number(e.target.value))}
+              />
+            </label>
+          </div>
+
+          <svg className="graph-minimap" viewBox="0 0 100 100">
+            {edges.map(({ from, to }) => (
+              <line
+                key={`mini-${from.id}-${to.id}`}
+                x1={from.x}
+                y1={from.y}
+                x2={to.x}
+                y2={to.y}
+                className="graph-mini-edge"
+              />
+            ))}
+            {displayNodes.map((node) => (
+              <circle
+                key={`mini-node-${node.id}`}
+                cx={node.x}
+                cy={node.y}
+                r={selected?.id === node.id ? 1.4 : 0.9}
+                className={selected?.id === node.id ? "graph-mini-node graph-mini-node-active" : "graph-mini-node"}
+              />
+            ))}
+          </svg>
         </div>
 
         <aside className="graph-inspector">
@@ -296,7 +361,7 @@ export default function Graph(): React.JSX.Element {
           </div>
           <div className="graph-hint">{t("graph.hint")}</div>
           <div className="graph-hint">{t("graph.vault", { path: vaultPath || "-" })}</div>
-          <div className="graph-hint">{t("graph.summary", { nodes: filtered.length, edges: edges.length })}</div>
+          <div className="graph-hint">{t("graph.summary", { nodes: displayNodes.length, edges: edges.length })}</div>
         </aside>
       </div>
     </div>

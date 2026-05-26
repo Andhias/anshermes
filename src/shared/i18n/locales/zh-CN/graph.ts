@@ -23,4 +23,7 @@ export default {
   intensityLow: "低辉光",
   intensityMedium: "中辉光",
   intensityHigh: "高辉光",
+  focusNeighbors: "仅看邻居",
+  repel: "斥力",
+  spring: "弹簧",
 } as const;

@@ -23,4 +23,7 @@ export default {
   intensityLow: "Brilho baixo",
   intensityMedium: "Brilho médio",
   intensityHigh: "Brilho alto",
+  focusNeighbors: "Focar vizinhos",
+  repel: "Repulsão",
+  spring: "Mola",
 } as const;
