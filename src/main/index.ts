@@ -117,6 +117,7 @@ import {
   resumeCronJob,
   triggerCronJob,
 } from "./cronjobs";
+import { readObsidianGraph } from "./obsidian-graph";
 import {
   listBoards as kanbanListBoards,
   currentBoard as kanbanCurrentBoard,
@@ -1138,6 +1139,11 @@ function setupIPC(): void {
     const conn = getConnectionConfig();
     if (conn.mode === "ssh" && conn.ssh) return sshReadLogs(conn.ssh, logFile, lines);
     return readLogs(logFile, lines);
+  });
+
+  // Obsidian graph
+  ipcMain.handle("read-obsidian-graph", (_event, vaultPath?: string) => {
+    return readObsidianGraph(vaultPath);
   });
 }
 

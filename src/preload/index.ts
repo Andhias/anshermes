@@ -761,6 +761,22 @@ const hermesAPI = {
     lines?: number,
   ): Promise<{ content: string; path: string }> =>
     ipcRenderer.invoke("read-logs", logFile, lines),
+
+  // Obsidian graph
+  readObsidianGraph: (
+    vaultPath?: string,
+  ): Promise<{
+    vaultPath: string;
+    nodeCount: number;
+    edgeCount: number;
+    nodes: Array<{
+      id: string;
+      label: string;
+      path: string;
+      tags: string[];
+      links: string[];
+    }>;
+  }> => ipcRenderer.invoke("read-obsidian-graph", vaultPath),
 };
 
 if (process.contextIsolated) {

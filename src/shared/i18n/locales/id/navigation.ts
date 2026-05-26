@@ -10,6 +10,7 @@ export default {
   memory: "Memori",
   tools: "Alat",
   schedules: "Jadwal",
+  graph: "Graph",
   gateway: "Gateway",
   settings: "Pengaturan",
 } as const;

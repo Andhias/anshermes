@@ -635,6 +635,20 @@ interface HermesAPI {
     logFile?: string,
     lines?: number,
   ) => Promise<{ content: string; path: string }>;
+
+  // Obsidian graph
+  readObsidianGraph: (vaultPath?: string) => Promise<{
+    vaultPath: string;
+    nodeCount: number;
+    edgeCount: number;
+    nodes: Array<{
+      id: string;
+      label: string;
+      path: string;
+      tags: string[];
+      links: string[];
+    }>;
+  }>;
 }
 
 declare global {

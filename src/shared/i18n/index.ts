@@ -26,6 +26,7 @@ import soulEn from "./locales/en/soul";
 import memoryEn from "./locales/en/memory";
 import installEn from "./locales/en/install";
 import constantsEn from "./locales/en/constants";
+import graphEn from "./locales/en/graph";
 import commonEs from "./locales/es/common";
 import navigationEs from "./locales/es/navigation";
 import welcomeEs from "./locales/es/welcome";
@@ -46,6 +47,7 @@ import soulEs from "./locales/es/soul";
 import memoryEs from "./locales/es/memory";
 import installEs from "./locales/es/install";
 import constantsEs from "./locales/es/constants";
+import graphEs from "./locales/es/graph";
 import commonId from "./locales/id/common";
 import navigationId from "./locales/id/navigation";
 import welcomeId from "./locales/id/welcome";
@@ -66,6 +68,7 @@ import soulId from "./locales/id/soul";
 import memoryId from "./locales/id/memory";
 import installId from "./locales/id/install";
 import constantsId from "./locales/id/constants";
+import graphId from "./locales/id/graph";
 import commonZh from "./locales/zh-CN/common";
 import navigationZh from "./locales/zh-CN/navigation";
 import welcomeZh from "./locales/zh-CN/welcome";
@@ -86,6 +89,7 @@ import soulZh from "./locales/zh-CN/soul";
 import memoryZh from "./locales/zh-CN/memory";
 import installZh from "./locales/zh-CN/install";
 import constantsZh from "./locales/zh-CN/constants";
+import graphZh from "./locales/zh-CN/graph";
 import commonPt from "./locales/pt-BR/common";
 import navigationPt from "./locales/pt-BR/navigation";
 import welcomePt from "./locales/pt-BR/welcome";
@@ -106,6 +110,7 @@ import soulPt from "./locales/pt-BR/soul";
 import memoryPt from "./locales/pt-BR/memory";
 import installPt from "./locales/pt-BR/install";
 import constantsPt from "./locales/pt-BR/constants";
+import graphPt from "./locales/pt-BR/graph";
 
 export const resources = {
   en: {
@@ -130,6 +135,7 @@ export const resources = {
       memory: memoryEn,
       install: installEn,
       constants: constantsEn,
+      graph: graphEn,
     },
   },
   es: {
@@ -154,6 +160,7 @@ export const resources = {
       memory: memoryEs,
       install: installEs,
       constants: constantsEs,
+      graph: graphEs,
     },
   },
   id: {
@@ -178,6 +185,7 @@ export const resources = {
       memory: memoryId,
       install: installId,
       constants: constantsId,
+      graph: graphId,
     },
   },
   "zh-CN": {
@@ -202,6 +210,7 @@ export const resources = {
       memory: memoryZh,
       install: installZh,
       constants: constantsZh,
+      graph: graphZh,
     },
   },
   "pt-BR": {
@@ -226,6 +235,7 @@ export const resources = {
       memory: memoryPt,
       install: installPt,
       constants: constantsPt,
+      graph: graphPt,
     },
   },
 } satisfies Resource;

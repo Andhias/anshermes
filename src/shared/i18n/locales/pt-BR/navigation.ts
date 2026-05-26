@@ -10,6 +10,7 @@ export default {
   memory: "Memória",
   tools: "Ferramentas",
   schedules: "Agendamentos",
+  graph: "Graph",
   gateway: "Gateway",
   settings: "Configurações",
 } as const;
